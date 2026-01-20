@@ -1,0 +1,44 @@
+// Prisma schema is the single source of truth for DB models.
+// We start with SQLite for frictionless local dev; switching to Postgres later is simple.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // Keeping this literal avoids needing an env file for the initial scaffold.
+  // Later, when moving to Postgres, switch back to `env("DATABASE_URL")`.
+  url      = "file:./dev.db"
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  // Store as hex so the UI can use it directly (ex: #3b82f6).
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events    Event[]
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime
+  allDay      Boolean   @default(false)
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([startAt])
+  @@index([endAt])
+  @@index([categoryId])
+}
+
