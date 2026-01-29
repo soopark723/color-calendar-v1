@@ -11,9 +11,16 @@ export default defineConfig({
     }
   },
   server: {
+    port: 3000, // Frontend runs on port 3000
+    proxy: {
+      // Proxy /api requests to backend
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      }
+    },
     fs: {
       allow: [path.resolve(__dirname, "..")]
     }
   }
 });
-

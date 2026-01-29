@@ -1,8 +1,19 @@
 import { PrismaClient } from "@prisma/client";
 
 /**
- * PrismaClient is expensive to create. In production we'd usually have 1 instance
- * per process. In dev with hot reload, we also want to avoid creating many.
+ * PrismaClient singleton to prevent multiple instances during hot reload.
+ * In production: 1 instance per process
+ * In development: Reuse instance across hot reloads
  */
-export const prisma = new PrismaClient();
 
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+  log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+});
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
