@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type { Category, Event } from "../../shared/api-types";
-import { fetchCategories, fetchEvents, createEvent, updateEvent } from "../api";
+import { fetchCategories, fetchEvents, createEvent, updateEvent, deleteEvent } from "../api";
 import { MonthView } from "./MonthView";
 import { CreateEventModal } from "./CreateEventModal";
 
@@ -92,6 +92,29 @@ export const CalendarPage: React.FC = () => {
     setSelectedEvent(event);
     // Set selectedDate to the event's start date for the modal
     setSelectedDate(new Date(event.startAt));
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+  // Optimistic UI: remove immediately
+  setEvents((prev) => prev.filter((e) => e.id !== id));
+
+  try {
+    await deleteEvent(id);
+  } catch (err) {
+    // Rollback if delete fails
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const from = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+    const to = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0, 0));
+
+    const eventsRes = await fetchEvents({
+      from: from.toISOString(),
+      to: to.toISOString(),
+    });
+
+    setEvents(eventsRes.events);
+    throw err;
+    }
   };
 
   const handleCloseModal = () => {
@@ -237,6 +260,7 @@ export const CalendarPage: React.FC = () => {
           categories={categories}
           onClose={handleCloseModal}
           onSave={handleSaveEvent}
+          onDelete={handleDeleteEvent}
           event={selectedEvent}
         />
       )}

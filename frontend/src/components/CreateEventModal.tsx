@@ -14,6 +14,7 @@ interface CreateEventModalProps {
     categoryId?: string | null;
   }) => Promise<void>;
   event?: Event | null; // If provided, modal is in edit mode
+  onDelete?: (id: string) => Promise<void>;
 }
 
 /**
@@ -25,6 +26,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   categories,
   onClose,
   onSave,
+  onDelete,
   event,
 }) => {
   const isEditMode = !!event;
@@ -45,6 +47,25 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }
     return "09:00";
   };
+
+  const handleDelete = async () => {
+  if (!event) return;
+
+  const confirmed = window.confirm(
+    `Delete "${event.title}"? This cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  try {
+    setSaving(true);
+    await onDelete?.(event.id);
+    onClose();
+  } catch (err) {
+    setError("Failed to delete event");
+  } finally {
+    setSaving(false);
+  }
+};
 
   const getInitialEndTime = (): string => {
     if (event && !event.allDay) {
@@ -357,22 +378,37 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={saving}
-            >
-              {saving ? "Saving..." : isEditMode ? "Save" : "Create"}
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            {/* Delete (edit mode only) */}
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={saving}
+                className="rounded px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+              >
+                Delete
+              </button>
+            )}
+
+            {/* Right-side actions */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={saving}
+              >
+                {saving ? "Saving..." : isEditMode ? "Save" : "Create"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

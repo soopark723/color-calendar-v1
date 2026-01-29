@@ -89,7 +89,7 @@ export async function updateEvent(
   }
 ): Promise<{ event: Event }> {
   const res = await fetch(`${API_BASE}/events/${id}`, {
-    method: "PUT",
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
@@ -110,4 +110,14 @@ export async function updateEvent(
   }
 
   return res.json() as Promise<{ event: Event }>;
+}
+
+export async function deleteEvent(id: string) {
+  const res = await fetch(`/api/events/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete event");
+  }
 }
